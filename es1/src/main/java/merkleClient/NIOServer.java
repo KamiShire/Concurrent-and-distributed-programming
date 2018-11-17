@@ -22,7 +22,7 @@ public class NIOServer {
 
         // ServerSocketChannel: selectable channel for stream-oriented listening sockets
         ServerSocketChannel serverSocket = ServerSocketChannel.open();
-        InetSocketAddress localAddr = new InetSocketAddress("localhost", 2222);
+        InetSocketAddress localAddr = new InetSocketAddress("localhost", 2323);
 
         // Binds the channel's socket to a local address and configures the socket to listen for connections
         serverSocket.bind(localAddr);
@@ -57,7 +57,7 @@ public class NIOServer {
 
                     // Operation-set bit for read operations
                     clientSocket.register(selector, SelectionKey.OP_READ);
-                    log("Connection Accepted: " + clientSocket.getLocalAddress() + "\n", "err");
+                    //log("Connection Accepted: " + clientSocket.getLocalAddress() + "\n", "err");
 
                     // Tests whether this key's channel is ready for reading
                 } else if (myKey.isReadable()) {

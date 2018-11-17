@@ -99,22 +99,18 @@ public final class HashMultiSet<T, V> {
 
 		if(!(Files.isReadable(source)))
 			throw new IOException(exc + " cannot access the file in read mode");
-
+		multimap.clear();
         /**
          * Generate a Stream<String> using Files.lines(), then using map to split elements which returns a Stream<String[]>
          *     flatMap returns a Stream<String> which is then collect into a List<String>
          *
          *  I used lambdas and streams just to exercise. Probably this solution is not the best in terms of performance, i believe
          *  (from my understanding) that streams should be used for more complicated tasks.
+		 *
+		 *  NOTE: the split method leaves spaces after the comma, don't understand why.
          */
-		List<String> list = Files.lines(source).map(x -> x.split(",")).flatMap(Arrays::stream).collect(Collectors.toList());
+         buildFromCollection((List<T>)Files.lines(source).map(x -> x.split(",")).forEach(trim()).flatMap(Arrays::stream).collect(Collectors.toList()));
 
-        /**
-         * I couldn't find a way to pass list as parameter of buildFromCollection() so i had to iterate through the list and add each element,
-         * i couldn't convert List<String> to List<T>
-         */
-		for(String element: list)
-		    addElement((T)element);
 	}
 
 	/**
@@ -125,6 +121,7 @@ public final class HashMultiSet<T, V> {
 	    if(source == null)
 	        throw new IllegalArgumentException("Method should be invoked with a non null file path");
 	    if(!(source.isEmpty())) {
+			multimap.clear();
             for(T element: source) {
                 addElement(element);
             }
