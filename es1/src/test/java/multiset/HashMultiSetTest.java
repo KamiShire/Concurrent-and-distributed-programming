@@ -37,7 +37,7 @@ public class HashMultiSetTest {
 
 	@Test
 	public void testBuildFromFile() throws Exception {
-		List<String> excepted = Arrays.asList("ab,cdc,ab,cd,cd,fg,gf,fg");
+		List<String> excepted = Arrays.asList("ab", "cdc","ab","cd","cd","fg","gf","fg");
 
 		HashMultiSet<String,Integer> hmSet = new HashMultiSet<>();
 
