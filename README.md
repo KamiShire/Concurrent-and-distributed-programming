@@ -1,2 +1,2 @@
-# Concurrent and distributed programming
-Repo of the course Concurrent and distributed programming. In it there are all the homework assignements
+# Distributed and concurrent programming
+Repo of the course Distributed and concurrent programming. In it there are all the homework assignements
