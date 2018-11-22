@@ -1,7 +1,13 @@
 package merkleClient;
 
-import java.io.IOException;
+import java.io.*;
+import java.net.InetSocketAddress;
+import java.nio.ByteBuffer;
+import java.nio.channels.Channels;
+import java.nio.channels.SocketChannel;
+import java.nio.charset.Charset;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -46,10 +52,83 @@ public class MerkleValidityRequest {
 	 * 	<p>Uses the utility method {@link #isTransactionValid(String, String, List<String>) isTransactionValid} </p>
 	 * 	<p>method to check whether the current transaction is valid or not.</p>
 	 * */
+
 	public Map<Boolean, List<String>> checkWhichTransactionValid() throws IOException {
-		throw new UnsupportedOperationException();
+        InetSocketAddress serverAdr = new InetSocketAddress(authIPAddr,authPort);
+        SocketChannel socket = SocketChannel.open(serverAdr);
+        socket.configureBlocking(true);
+
+
+        ArrayList<String> invalidTrans = new ArrayList<>();
+        ArrayList<String> validTrans = new ArrayList<>();
+
+
+       // BufferedReader inBuffer = new BufferedReader(new InputStreamReader(Channels.newInputStream(socket)));
+
+		ByteBuffer buffer = ByteBuffer.allocate(2048);
+
+		for(String singleRequest: mRequests) {
+
+			byte[] message = singleRequest.getBytes();
+			buffer.clear();
+			buffer.put(ByteBuffer.wrap(message));
+			buffer.flip();
+			System.out.println("Sending: "+singleRequest);
+			socket.write(buffer);
+
+			try{
+				Thread.sleep(5000);
+				System.out.println("slept");
+			}
+			catch(Exception e){}
+
+			int i=0;
+			ByteBuffer out = ByteBuffer.allocate(2048);
+			out.clear();
+			socket.read(out);
+			out.rewind();
+
+			ArrayList<String> list = new ArrayList<>();
+			System.out.println("Remaining: "+out.remaining()+"\n Position: "+out.position());
+			while(out.hasRemaining()){
+
+				byte[] tmp = new byte[32];
+				int off = 32*i;
+				int j = 0;
+				for (int z = off; z < off + 32; z++) {
+					tmp[j] = out.get();
+					j++;
+				}
+				++i;
+
+				String msg = new String(tmp,"UTF-8");
+				System.out.println(msg);
+				list.add(msg);
+			}
+			System.out.println("List: \n"+list);
+
+
+			if(isTransactionValid(singleRequest,list) == true)
+                validTrans.add(singleRequest);
+            else
+                invalidTrans.add(singleRequest);
+        }
+        String close = "close";
+
+        byte[] closeConnection = close.getBytes();
+		buffer.clear();
+        buffer.put(closeConnection);
+		buffer.flip();
+        socket.write(buffer);
+
+        socket.close();
+
+        HashMap<Boolean,List<String>> mapResults = new HashMap<>();
+        mapResults.put(true, validTrans);
+        mapResults.put(false,invalidTrans);
+        return mapResults;
+
 	}
-	
 	/**
 	 * 	Checks whether a transaction 'merkleTx' is part of the merkle tree.
 	 * 
@@ -60,7 +139,11 @@ public class MerkleValidityRequest {
 	 *  @return: boolean value indicating whether this transaction was validated or not.
 	 * */
 	private boolean isTransactionValid(String merkleTx, List<String> merkleNodes) {
-		throw new UnsupportedOperationException();
+		String computedRoot = merkleTx;
+		for(String node: merkleNodes) {
+		    computedRoot = HashUtil.md5Java(computedRoot + node);
+        }
+        return computedRoot == mRoot;
 	}
 
 	/**

@@ -109,8 +109,7 @@ public final class HashMultiSet<T, V> {
 		 *
 		 *  NOTE: the split method leaves spaces after the comma, don't understand why.
          */
-         buildFromCollection((List<T>)Files.lines(source).map(x -> x.split(",")).forEach(trim()).flatMap(Arrays::stream).collect(Collectors.toList()));
-
+         buildFromCollection((List<T>)Files.lines(source).map(x -> x.split(",")).flatMap(Arrays::stream).collect(Collectors.toList()));
 	}
 
 	/**

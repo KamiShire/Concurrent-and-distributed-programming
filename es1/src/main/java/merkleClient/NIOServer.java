@@ -1,12 +1,13 @@
 package merkleClient;
 
 import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutput;
+import java.io.ObjectOutputStream;
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
-import java.nio.channels.SelectionKey;
-import java.nio.channels.Selector;
-import java.nio.channels.ServerSocketChannel;
-import java.nio.channels.SocketChannel;
+import java.nio.channels.*;
+import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.Set;
 
@@ -45,7 +46,10 @@ public class NIOServer {
             Set<SelectionKey> activeKeys = selector.selectedKeys();
             Iterator<SelectionKey> keys = activeKeys.iterator();
 
+
+
             while (keys.hasNext()) {
+                log("Entered","out");
                 SelectionKey myKey = keys.next();
 
                 // Tests whether this key's channel is ready to accept a new socket connection
@@ -60,21 +64,63 @@ public class NIOServer {
                     //log("Connection Accepted: " + clientSocket.getLocalAddress() + "\n", "err");
 
                     // Tests whether this key's channel is ready for reading
-                } else if (myKey.isReadable()) {
+                } else if(myKey.isReadable()) {
+                    log("readable", "out");
+
+                    ByteBuffer buffer = ByteBuffer.allocate(2048);
                     SocketChannel clientSocket = (SocketChannel) myKey.channel();
-                    ByteBuffer buffer = ByteBuffer.allocate(256);
                     clientSocket.read(buffer);
+                    buffer.flip();
+
                     String result = new String(buffer.array()).trim();
 
-                    log("--- Message received: " + result, "err" );
+                    log("--- Message received: " + result, "out");
 
-                    if (result.equals("close")) {
+                    if(result.equals("close")) {
                         clientSocket.close();
-                        log("\nIt's time to close this connection as we got a close packet", "out");
+                        log("Connection closed","out");
+                    }
+                    else{
+                        clientSocket.register(selector, SelectionKey.OP_WRITE);
                     }
                 }
-                //important: should delete, otherwise re-iterated the next turn again.
+                else if(myKey.isWritable()) {
+                    log("writable","out");
+
+                    SocketChannel clientSocket = (SocketChannel) myKey.channel();
+                    ArrayList<String> test = new ArrayList<>();
+                    test.add(HashUtil.md5Java("a"));
+                    test.add(HashUtil.md5Java("4"));
+                    test.add(HashUtil.md5Java("ff"));
+                    test.add(HashUtil.md5Java("r"));
+                    test.add(HashUtil.md5Java("2"));
+
+                    log("---- hash list:","out");
+                    System.out.println("number of elements: "+test.size()+test);
+                    int bufferSize = (test.get(1).getBytes().length)*test.size();
+
+
+                    ByteBuffer outBuffer = ByteBuffer.allocate(2048);
+                    String concat = "";
+                    for(String element: test) {
+                        concat += element;
+                    }
+                    System.out.println("----Concat: "+concat);
+
+                    outBuffer.clear();
+                    outBuffer.put(concat.getBytes("UTF-8"));
+
+                    outBuffer.flip();
+                    clientSocket.write(outBuffer);
+
+                    clientSocket.register(selector, SelectionKey.OP_READ);
+
+                }
                 keys.remove();
+
+
+                //important: should delete, otherwise re-iterated the next turn again.
+
             }
         }
     }
