@@ -76,20 +76,14 @@ public class MerkleValidityRequest {
 			System.out.println("Sending: "+singleRequest);
 			socket.write(buffer);
 
-			try{
-				Thread.sleep(5000);
-				System.out.println("slept");
-			}
-			catch(Exception e){}
-
 			int i=0;
 			ByteBuffer out = ByteBuffer.allocate(2048);
-			out.clear();
+
 			socket.read(out);
-			out.rewind();
 
 			ArrayList<String> list = new ArrayList<>();
 			System.out.println("Remaining: "+out.remaining()+"\n Position: "+out.position());
+			out.flip();
 			while(out.hasRemaining()){
 
 				byte[] tmp = new byte[32];
@@ -101,11 +95,9 @@ public class MerkleValidityRequest {
 				}
 				++i;
 
-				String msg = new String(tmp,"UTF-8");
-				System.out.println(msg);
+				String msg = new String(tmp,"UTF-8");;
 				list.add(msg);
 			}
-			System.out.println("List: \n"+list);
 
 
 			if(isTransactionValid(singleRequest,list) == true)
@@ -126,6 +118,7 @@ public class MerkleValidityRequest {
         HashMap<Boolean,List<String>> mapResults = new HashMap<>();
         mapResults.put(true, validTrans);
         mapResults.put(false,invalidTrans);
+        System.out.println(mapResults);
         return mapResults;
 
 	}

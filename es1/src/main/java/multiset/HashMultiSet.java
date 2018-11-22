@@ -25,7 +25,7 @@ public final class HashMultiSet<T, V> {
 	/**
 	 *XXX: data structure backing this MultiSet implementation. 
 	 */
-	HashMap<T,V> multimap;
+	private HashMap<T,V> multimap;
 	/**
 	 * Sole constructor of the class.
 	 **/
@@ -104,7 +104,7 @@ public final class HashMultiSet<T, V> {
          * Generate a Stream<String> using Files.lines(), then using map to split elements which returns a Stream<String[]>
          *     flatMap returns a Stream<String> which is then collect into a List<String>
          *
-         *  I used lambdas and streams just to exercise. Probably this solution is not the best in terms of performance, i believe
+         *  I used lambdas and streams just to practice. Probably this solution is not the best in terms of performance, i believe
          *  (from my understanding) that streams should be used for more complicated tasks.
 		 *
 		 *  NOTE: the split method leaves spaces after the comma, don't understand why.

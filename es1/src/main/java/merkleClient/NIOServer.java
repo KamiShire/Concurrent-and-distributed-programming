@@ -105,12 +105,13 @@ public class NIOServer {
                     for(String element: test) {
                         concat += element;
                     }
-                    System.out.println("----Concat: "+concat);
+
 
                     outBuffer.clear();
                     outBuffer.put(concat.getBytes("UTF-8"));
-
+                    System.out.println("---- Position 1: "+outBuffer.position()+"\n Limit 1: "+outBuffer.limit());
                     outBuffer.flip();
+                    System.out.println("---- Position 2: "+outBuffer.position()+"\n Limit 2: "+outBuffer.limit());
                     clientSocket.write(outBuffer);
 
                     clientSocket.register(selector, SelectionKey.OP_READ);
