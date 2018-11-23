@@ -67,7 +67,7 @@ public class NIOServer {
                 } else if(myKey.isReadable()) {
                     log("readable", "out");
 
-                    ByteBuffer buffer = ByteBuffer.allocate(2048);
+                    ByteBuffer buffer = ByteBuffer.allocate(32);
                     SocketChannel clientSocket = (SocketChannel) myKey.channel();
                     clientSocket.read(buffer);
                     buffer.flip();
@@ -99,8 +99,14 @@ public class NIOServer {
                     System.out.println("number of elements: "+test.size()+test);
                     int bufferSize = (test.get(1).getBytes().length)*test.size();
 
+                    //Creating header buffer and sending data about the size of the buffer to allocate on the client
+                    ByteBuffer header = ByteBuffer.allocate(4);
+                    header.putInt(bufferSize);
+                    header.flip();
+                    clientSocket.write(header);
+                    log("header sent, buffer size: "+bufferSize, "out");
 
-                    ByteBuffer outBuffer = ByteBuffer.allocate(2048);
+                    ByteBuffer outBuffer = ByteBuffer.allocate(bufferSize);
                     String concat = "";
                     for(String element: test) {
                         concat += element;
@@ -109,10 +115,9 @@ public class NIOServer {
 
                     outBuffer.clear();
                     outBuffer.put(concat.getBytes("UTF-8"));
-                    System.out.println("---- Position 1: "+outBuffer.position()+"\n Limit 1: "+outBuffer.limit());
                     outBuffer.flip();
-                    System.out.println("---- Position 2: "+outBuffer.position()+"\n Limit 2: "+outBuffer.limit());
                     clientSocket.write(outBuffer);
+                    log("---- Data sent", "out");
 
                     clientSocket.register(selector, SelectionKey.OP_READ);
 

@@ -1,6 +1,7 @@
 package merkleClient;
 
 import java.io.*;
+import java.net.ConnectException;
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
 import java.nio.channels.Channels;
@@ -54,90 +55,115 @@ public class MerkleValidityRequest {
 	 * */
 
 	public Map<Boolean, List<String>> checkWhichTransactionValid() throws IOException {
-        InetSocketAddress serverAdr = new InetSocketAddress(authIPAddr,authPort);
-        SocketChannel socket = SocketChannel.open(serverAdr);
-        socket.configureBlocking(true);
+		HashMap<Boolean, List<String>> mapResults = new HashMap<>();
+		ArrayList<String> invalidTrans = new ArrayList<>();
+		ArrayList<String> validTrans = new ArrayList<>();
+
+		/**
+		 * Open connection with the server
+		 */
+		InetSocketAddress serverAdr = new InetSocketAddress(authIPAddr, authPort);
+		try {
+			SocketChannel socket = SocketChannel.open(serverAdr);
+			socket.configureBlocking(true);
+			/**
+			 * I used and arbitrary size of the buffer we can receive 64 nodes
+			 */
+			ByteBuffer buffer = ByteBuffer.allocate(32);
+
+			/**
+			 * For each request write the channel using the buffer. When the server receive the request, it responds
+			 * with a list of complementary nodes of the merkle tree. The list is written in a buffer chaining all the string of the nodes.
+			 */
+			for (String singleRequest : mRequests) {
+				byte[] message = singleRequest.getBytes();
+				buffer.clear();
+				buffer.put(ByteBuffer.wrap(message));
+				buffer.flip();
+				System.out.println("Sending: " + singleRequest);
+				socket.write(buffer);
 
 
-        ArrayList<String> invalidTrans = new ArrayList<>();
-        ArrayList<String> validTrans = new ArrayList<>();
 
+				//receiving header in which is written the size of the data buffer to allocate
+				ByteBuffer header = ByteBuffer.allocate(4);
+				socket.read(header);
+				int bufferSize = header.getInt(0);
+				System.out.println("Buffer size received: "+bufferSize);
 
-       // BufferedReader inBuffer = new BufferedReader(new InputStreamReader(Channels.newInputStream(socket)));
+				//Creating a ByteBuffer in which are stored the data sent by the server
+				ByteBuffer out = ByteBuffer.allocate(bufferSize);
+				socket.read(out);
 
-		ByteBuffer buffer = ByteBuffer.allocate(2048);
+				ArrayList<String> list = new ArrayList<>();
+				out.flip();
+				/**
+				 * Assuming that every complementary node contains the hash of the chaining of the hash its children we know
+				 * that string is 32 chars long, so we read chunks of 32 bytes every cycle, in this way we can reconstruct the
+				 * list sent by the server.
+				 */
+				int i = 0;
+				while (out.hasRemaining()) {
+					byte[] tmp = new byte[32];
+					int off = 32 * i;
+					int j = 0;
+					for (int z = off; z < off + 32; z++) {
+						tmp[j] = out.get();
+						j++;
+					}
+					++i;
 
-		for(String singleRequest: mRequests) {
+					String msg = new String(tmp, "UTF-8");
+					list.add(msg);
+				}
 
-			byte[] message = singleRequest.getBytes();
+				if (isTransactionValid(singleRequest, list) == true)
+					validTrans.add(singleRequest);
+				else
+					invalidTrans.add(singleRequest);
+			}
+			/**
+			 * Close connection
+			 */
+			String close = "close";
+
+			byte[] closeConnection = close.getBytes();
+
 			buffer.clear();
-			buffer.put(ByteBuffer.wrap(message));
+			buffer.put(closeConnection);
 			buffer.flip();
-			System.out.println("Sending: "+singleRequest);
 			socket.write(buffer);
 
-			int i=0;
-			ByteBuffer out = ByteBuffer.allocate(2048);
+			socket.close();
 
-			socket.read(out);
+			mapResults.put(true, validTrans);
+			mapResults.put(false, invalidTrans);
+			return mapResults;
 
-			ArrayList<String> list = new ArrayList<>();
-			System.out.println("Remaining: "+out.remaining()+"\n Position: "+out.position());
-			out.flip();
-			while(out.hasRemaining()){
-
-				byte[] tmp = new byte[32];
-				int off = 32*i;
-				int j = 0;
-				for (int z = off; z < off + 32; z++) {
-					tmp[j] = out.get();
-					j++;
-				}
-				++i;
-
-				String msg = new String(tmp,"UTF-8");;
-				list.add(msg);
-			}
-
-
-			if(isTransactionValid(singleRequest,list) == true)
-                validTrans.add(singleRequest);
-            else
-                invalidTrans.add(singleRequest);
-        }
-        String close = "close";
-
-        byte[] closeConnection = close.getBytes();
-		buffer.clear();
-        buffer.put(closeConnection);
-		buffer.flip();
-        socket.write(buffer);
-
-        socket.close();
-
-        HashMap<Boolean,List<String>> mapResults = new HashMap<>();
-        mapResults.put(true, validTrans);
-        mapResults.put(false,invalidTrans);
-        System.out.println(mapResults);
-        return mapResults;
-
+		} catch (ConnectException e) {
+			System.out.println("Connection refused, returning empty map");
+			e.printStackTrace();
+			return mapResults;
+		}
 	}
+
 	/**
 	 * 	Checks whether a transaction 'merkleTx' is part of the merkle tree.
-	 * 
+	 *
 	 *  @param merkleTx String: the transaction we want to validate
-	 *  @param merkleNodes String: the hash codes of the merkle nodes required to compute 
+	 *  @param merkleNodes String: the hash codes of the merkle nodes required to compute
 	 *  the merkle root
-	 *  
+	 *
 	 *  @return: boolean value indicating whether this transaction was validated or not.
 	 * */
 	private boolean isTransactionValid(String merkleTx, List<String> merkleNodes) {
 		String computedRoot = merkleTx;
-		for(String node: merkleNodes) {
-		    computedRoot = HashUtil.md5Java(computedRoot + node);
-        }
-        return computedRoot == mRoot;
+		for (String node : merkleNodes) {
+			computedRoot = HashUtil.md5Java(computedRoot + node);
+		}
+		return computedRoot == mRoot;
 	}
+
 
 	/**
 	 * Builder for the MerkleValidityRequest class. 
