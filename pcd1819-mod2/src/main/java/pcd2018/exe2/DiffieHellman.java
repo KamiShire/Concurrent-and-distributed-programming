@@ -32,19 +32,29 @@ public class DiffieHellman {
    * @return tutte le coppie di possibili segreti a,b
    */
   public List<Integer> crack(long publicA, long publicB) {
+      System.out.println("In function.");
     List<Integer> res = new ArrayList<Integer>();
-    Map<Integer,Integer> map = IntStream.rangeClosed(1,65536).parallel().collect(
+    Map<Integer,Integer> map = IntStream.rangeClosed(1,65536).boxed().parallel().collect(
             Collectors.toMap(
-            val -> val ,
-                    v -> {
-              for(int i = 1; i <= 65536; ++i)
-                if(DiffieHellmanUtils.modPow(publicB,((Number)val).longValue(),p) == DiffieHellmanUtils.modPow(publicA,i,p))
-                  return i;
-
+            val -> val , val -> {
+              System.out.println("In map.");
+              for(int i = 1; i <= 65536; ++i) {
+                if((DiffieHellmanUtils.modPow(g,((Number)val).longValue(),p) == publicA) &&
+                        (DiffieHellmanUtils.modPow(g,i,p) == publicB)) {
+                    System.out.println("a: "+val+" b: "+i);
+                    return i;
+                }
+              }
               return 0;
             }
       )
     );
+    map.entrySet().stream().forEach(entry -> {
+        if(entry.getValue() != 0) {
+            res.add(entry.getKey());
+            res.add(entry.getValue());
+        }
+    });
 
     return res;
   }

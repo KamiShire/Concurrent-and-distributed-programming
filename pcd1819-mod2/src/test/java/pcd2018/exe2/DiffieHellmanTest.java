@@ -22,7 +22,9 @@ public class DiffieHellmanTest {
     long g = 10009;
     long publicA = 69148740;
     long publicB = 67540095;
+    System.out.println("Before call crack().");
     List<Integer> test = List.ofAll(new DiffieHellman(p, g).crack(publicA, publicB));
+    System.out.println("After call crack().");
     assertFalse(test.isEmpty());
     test.grouped(2).forEach(pair -> {
       long secretA = pair.get(0);
