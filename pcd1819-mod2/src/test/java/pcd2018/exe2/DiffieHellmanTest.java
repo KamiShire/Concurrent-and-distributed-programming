@@ -8,6 +8,9 @@ import org.junit.jupiter.api.Test;
 
 import io.vavr.collection.List;
 
+import java.time.Duration;
+import java.time.Instant;
+
 /**
  * Per la soluzione dell'esercizio 2, questo test deve risultare soddisfatto.
  * 
@@ -22,9 +25,11 @@ public class DiffieHellmanTest {
     long g = 10009;
     long publicA = 69148740;
     long publicB = 67540095;
-    System.out.println("Before call crack().");
+    Instant start = Instant.now();
     List<Integer> test = List.ofAll(new DiffieHellman(p, g).crack(publicA, publicB));
-    System.out.println("After call crack().");
+    Instant finish= Instant.now();
+    System.out.println("Coppie: "+test.length());
+    System.out.println("Time: "+Duration.between(start, finish).toMillis());
     assertFalse(test.isEmpty());
     test.grouped(2).forEach(pair -> {
       long secretA = pair.get(0);
