@@ -1,9 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<testsuite name="pcd2018.exe2.DiffieHellmanTest" tests="1" skipped="0" failures="0" errors="0" timestamp="2018-12-31T17:25:28" hostname="DESKTOP-PBMHU22" time="19.341">
-  <properties/>
-  <testcase name="exer2()" classname="pcd2018.exe2.DiffieHellmanTest" time="19.341"/>
-  <system-out><![CDATA[Coppie: 268
-Time: 19219
-]]></system-out>
-  <system-err><![CDATA[]]></system-err>
-</testsuite>
