@@ -80,7 +80,7 @@ public class DiffieHellman {
             });
     return res;
   }
-  public List<Integer> crackThreads(long publicA, long publicB) {
+  /*public List<Integer> crackThreads(long publicA, long publicB) {
     List<Integer> res = new ArrayList<Integer>();
     List<CrackThread> callable = new ArrayList<>();
 
@@ -89,5 +89,5 @@ public class DiffieHellman {
     }
 
     return res;
-  }
+  }*/
 }
